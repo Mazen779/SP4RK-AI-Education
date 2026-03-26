@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+/* Premium, calm, AI-first baseline */
+:root {
+  color-scheme: light;
+  --app-bg: #fafaf8;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background: var(--app-bg);
+}
+
+::selection {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+/* Smoother scroll + subtle typography defaults */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
