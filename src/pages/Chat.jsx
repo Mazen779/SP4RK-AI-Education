@@ -1,106 +1,138 @@
-import React, { useState } from "react";
-import { motion } from "framer-motion";
-import { MoreHorizontal, Plus } from "lucide-react";
-import { Card } from "../components/ui/Card";
-import { cn } from "../lib/cn";
+import React, { useRef, useState } from "react";
+import { ChatMessageList } from "../components/chat/ChatMessageList";
+import { ChatWelcomePanel } from "../components/chat/ChatWelcomePanel";
 import { PromptComposer } from "../components/chat/PromptComposer";
+import { fileToDataUrl } from "../lib/fileToDataUrl";
+import { generateGeminiReply } from "../lib/gemini";
+import { useLocale } from "../lib/locale.jsx";
 
-export function ChatPage({ aiModes, recentChats, chatMessages }) {
-  const [mode, setMode] = useState(aiModes[0]);
+function newId() {
+  return crypto.randomUUID();
+}
+
+export function ChatPage({ messages, onMessagesChange, chatMode = "general", chatModeLabel }) {
+  const { t, dir } = useLocale();
+  const [message, setMessage] = useState("");
+  const composerRef = useRef(null);
+  const threadEndRef = useRef(null);
+
+  const hasConversation = messages.length > 0;
+
+  function handleSelectQuickStart(payload) {
+    const prompt = typeof payload === "string" ? payload : payload?.prompt ?? "";
+    const openImagePicker = typeof payload === "object" && payload?.openImagePicker === true;
+    setMessage(prompt);
+    if (openImagePicker) {
+      composerRef.current?.openImagePicker?.();
+    }
+    requestAnimationFrame(() => {
+      composerRef.current?.focus?.();
+    });
+  }
+
+  async function handleSubmit({ text, files }) {
+    const trimmed = text.trim();
+    if (!trimmed && files.length === 0) return;
+
+    const imageAttachments = [];
+    const otherFileNames = [];
+    for (const f of files) {
+      if (f.type.startsWith("image/")) {
+        try {
+          const dataUrl = await fileToDataUrl(f);
+          imageAttachments.push({ name: f.name, dataUrl });
+        } catch {
+          otherFileNames.push(f.name);
+        }
+      } else {
+        otherFileNames.push(f.name);
+      }
+    }
+
+    const userMsg = {
+      id: newId(),
+      role: "user",
+      text: trimmed,
+      ...(imageAttachments.length ? { imageAttachments } : {}),
+      ...(otherFileNames.length ? { fileNames: otherFileNames } : {}),
+    };
+    const assistantId = newId();
+    const assistantMsg = {
+      id: assistantId,
+      role: "assistant",
+      text: "",
+      pending: true,
+      fileNames: [],
+    };
+
+    onMessagesChange((prev) => [...prev, userMsg, assistantMsg]);
+    setMessage("");
+
+    requestAnimationFrame(() => {
+      threadEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    });
+
+    try {
+      const aiReply = await generateGeminiReply(trimmed, { mode: chatMode });
+      onMessagesChange((prev) =>
+        prev.map((m) => (m.id === assistantId ? { ...m, text: aiReply, pending: false } : m))
+      );
+    } catch (error) {
+      const technical =
+        error instanceof Error && error.message ? `\n\n${error.message}` : "";
+      onMessagesChange((prev) =>
+        prev.map((m) =>
+          m.id === assistantId
+            ? { ...m, text: `${t.chat?.errorFallback ?? ""}${technical}`, pending: false }
+            : m
+        )
+      );
+    }
+  }
 
   return (
-    <div className="grid h-[calc(100vh-65px)] grid-cols-1 xl:grid-cols-[300px,1fr]">
-      <div className="hidden border-l border-zinc-200 bg-zinc-50/60 p-4 xl:block">
-        <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-zinc-900">المحادثات</h3>
-          <button className="rounded-2xl border border-zinc-200 bg-white p-2 text-zinc-700 hover:bg-zinc-50">
-            <Plus className="h-4 w-4" />
-          </button>
-        </div>
-        <div className="mb-3 rounded-2xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-400">ابحث في المحادثات...</div>
-        <div className="space-y-2">
-          {["الشات العام", "محادثات المواد", "محادثات الدروس", "محادثات الصور", "محادثات الملفات", "محادثات المراجعة"].map((g, i) => (
-            <div key={g} className={cn("rounded-2xl px-3 py-2.5 text-sm", i === 0 ? "bg-zinc-950 text-white" : "text-zinc-700 hover:bg-white")}>
-              {g}
-            </div>
-          ))}
-        </div>
-        <div className="mt-6 space-y-2">
-          {recentChats.map((chat) => (
-            <div key={chat.id} className="rounded-2xl border border-zinc-200 bg-white p-3">
-              <div className="mb-1 flex items-center justify-between gap-2">
-                <div className="truncate text-sm font-medium text-zinc-900">{chat.title}</div>
-                <MoreHorizontal className="h-4 w-4 text-zinc-400" />
-              </div>
-              <div className="text-xs text-zinc-500">
-                {chat.type} · {chat.time}
-              </div>
-            </div>
-          ))}
-        </div>
+    <div className="relative flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-[var(--spark-chat-canvas)]" dir={dir}>
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute -left-20 top-8 h-56 w-56 rounded-full bg-violet-300/20 blur-3xl" />
+        <div className="absolute -right-24 top-24 h-72 w-72 rounded-full bg-cyan-300/20 blur-3xl" />
+        <div className="absolute bottom-20 left-1/3 h-52 w-52 rounded-full bg-fuchsia-300/10 blur-3xl" />
       </div>
 
-      <div className="flex min-h-0 flex-col">
-        <div className="border-b border-zinc-200 bg-white px-4 py-3 md:px-6">
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <div>
-              <div className="mb-1 text-sm font-semibold text-zinc-900">الشات العام التعليمي</div>
-              <div className="text-xs text-zinc-500">مفيد، منظم، ويعمل ضمن حدود تعليمية واضحة</div>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {aiModes.map((m) => (
-                <button
-                  key={m}
-                  onClick={() => setMode(m)}
-                  className={cn(
-                    "rounded-full px-3 py-1.5 text-[11px] transition-colors",
-                    mode === m ? "bg-zinc-950 text-white" : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
-                  )}
-                >
-                  {m}
-                </button>
-              ))}
-            </div>
+      <div className="relative z-10 flex min-h-0 flex-1 flex-col overflow-hidden">
+        <div className="shrink-0 px-3 pt-3 md:px-8 md:pt-4">
+          <div className="inline-flex items-center rounded-full border border-[var(--spark-chat-border)] bg-[var(--spark-chat-surface)] px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-[var(--spark-shadow-xs)]">
+            {chatModeLabel || t.titles.chat}
           </div>
         </div>
-
-        <div className="min-h-0 flex-1 overflow-y-auto bg-[linear-gradient(to_bottom,_#ffffff,_#fafafa)] p-4 md:p-6">
-          <div className="mx-auto max-w-4xl space-y-4">
-            {chatMessages.map((m, i) => (
-              <motion.div key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex">
-                <div
-                  className={cn(
-                    "w-full rounded-[28px] p-4 md:p-5",
-                    m.role === "assistant" ? "border border-zinc-200 bg-white" : "bg-zinc-950 text-white"
-                  )}
-                >
-                  <div className={cn("mb-2 text-xs font-medium", m.role === "assistant" ? "text-zinc-400" : "text-white/60")}>
-                    {m.role === "assistant" ? `المساعد · ${mode}` : "أنت"}
-                  </div>
-                  <div className={cn("whitespace-pre-line text-sm leading-8", m.role === "assistant" ? "text-zinc-800" : "text-white")}>{m.content}</div>
-                  {m.note ? <div className="mt-4 rounded-2xl bg-zinc-50 p-3 text-xs text-zinc-600">{m.note}</div> : null}
-                </div>
-              </motion.div>
-            ))}
-
-            <div className="flex items-center gap-2 px-1 text-xs text-zinc-400">
-              <motion.div
-                animate={{ scale: [0.85, 1.1, 0.85], opacity: [0.4, 1, 0.4] }}
-                transition={{ repeat: Infinity, duration: 1.1 }}
-                className="h-2.5 w-2.5 rounded-full bg-zinc-400"
-              />
-              جاري إنشاء إجابة تعليمية دقيقة...
+        {hasConversation ? (
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain [scrollbar-gutter:stable]">
+            <ChatMessageList messages={messages} />
+            <div ref={threadEndRef} className="h-px shrink-0" aria-hidden />
+          </div>
+        ) : (
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+            <div className="flex min-h-0 flex-1 flex-col items-center justify-start overflow-hidden pt-4 md:pt-6">
+              <div className="flex min-h-0 w-full flex-col items-center overflow-hidden">
+                <ChatWelcomePanel onSelectQuickStart={handleSelectQuickStart} compactSpacing />
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
-        <div className="border-t border-zinc-200 bg-white p-4 md:p-5">
-          <div className="mx-auto max-w-4xl">
-            <PromptComposer compact />
-          </div>
+        <div className="relative shrink-0 border-t border-[var(--spark-chat-border)] bg-[color-mix(in_srgb,var(--spark-chat-surface)_74%,transparent)] px-3 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4 backdrop-blur-xl md:px-8 md:pb-6 md:pt-5">
+          <div
+            className="pointer-events-none absolute inset-x-0 bottom-full h-10 bg-gradient-to-t from-[color-mix(in_srgb,var(--spark-chat-surface)_80%,transparent)] to-transparent"
+            aria-hidden
+          />
+          <PromptComposer
+            ref={composerRef}
+            variant="chat"
+            message={message}
+            onMessageChange={setMessage}
+            onSubmit={handleSubmit}
+          />
         </div>
       </div>
     </div>
   );
 }
-
