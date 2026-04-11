@@ -1,0 +1,63 @@
+/**
+ * SP4RK Education — Chat workspace design tokens
+ * Spacing: 4px base (0.25rem). Radius: soft pills + cards.
+ * Shadows: layered, low contrast. Colors: zinc neutrals + single ink accent.
+ */
+
+:root {
+  /* Surfaces */
+  --spark-chat-canvas: #f7f7f5;
+  --spark-chat-surface: #ffffff;
+  --spark-chat-surface-subtle: #fafaf9;
+  --spark-chat-sidebar: linear-gradient(180deg, #fdfdfc 0%, #f8f8f6 100%);
+
+  /* Text */
+  --spark-chat-ink: #18181b;
+  --spark-chat-ink-muted: #52525b;
+  --spark-chat-ink-soft: #71717a;
+
+  /* Borders & rings */
+  --spark-chat-border: rgba(24, 24, 27, 0.08);
+  --spark-chat-border-hover: rgba(24, 24, 27, 0.12);
+  --spark-chat-ring-focus: rgba(24, 24, 27, 0.14);
+
+  /* Accent (brand ink — educational, calm) */
+  --spark-chat-accent: #0f172a;
+  --spark-chat-accent-soft: rgba(15, 23, 42, 0.06);
+  --spark-chat-accent-softer: rgba(15, 23, 42, 0.04);
+
+  /* Radius scale */
+  --spark-r-xs: 0.375rem;
+  --spark-r-sm: 0.5rem;
+  --spark-r-md: 0.75rem;
+  --spark-r-lg: 1rem;
+  --spark-r-xl: 1.25rem;
+  --spark-r-2xl: 1.5rem;
+  --spark-r-pill: 9999px;
+
+  /* Spacing scale (logical) */
+  --spark-space-1: 0.25rem;
+  --spark-space-2: 0.5rem;
+  --spark-space-3: 0.75rem;
+  --spark-space-4: 1rem;
+  --spark-space-5: 1.25rem;
+  --spark-space-6: 1.5rem;
+  --spark-space-8: 2rem;
+  --spark-space-10: 2.5rem;
+
+  /* Shadows */
+  --spark-shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --spark-shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.05);
+  --spark-shadow-md: 0 8px 32px rgba(15, 23, 42, 0.07);
+  --spark-shadow-lg: 0 16px 48px rgba(15, 23, 42, 0.09);
+  --spark-shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+
+  /* Motion */
+  --spark-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --spark-duration: 180ms;
+}
+
+/* Sidebar canvas (chat layout) */
+.spark-chat-sidebar-bg {
+  background: linear-gradient(180deg, #fdfdfc 0%, #f6f6f3 100%);
+}

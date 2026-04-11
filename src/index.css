@@ -1,9 +1,11 @@
 @import "tailwindcss";
+@import "./styles/spark-chat-tokens.css";
 
 /* Premium, calm, AI-first baseline */
 :root {
   color-scheme: light;
-  --app-bg: #fafaf8;
+  /* Soft lavender-gray shell (pairs with chat canvas tokens) */
+  --app-bg: #f6f5fc;
 }
 
 html,
@@ -16,10 +18,78 @@ body {
 }
 
 ::selection {
-  background: rgba(0, 0, 0, 0.08);
+  background: rgba(79, 70, 229, 0.14);
 }
 
 /* Smoother scroll + subtle typography defaults */
 * {
   -webkit-tap-highlight-color: transparent;
+}
+
+.home-page-snap-root {
+  /* proximity: wheel + smooth scroll won’t “chain” into the next snap like mandatory */
+  scroll-snap-type: y proximity;
+  scroll-behavior: smooth;
+  overscroll-behavior-y: contain;
+  /* Hide scrollbar visuals; wheel/trackpad/keyboard scroll unchanged */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.home-page-snap-root::-webkit-scrollbar {
+  display: none;
+}
+
+.home-nested-scroll-y {
+  overscroll-behavior-y: contain;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.home-nested-scroll-y::-webkit-scrollbar {
+  display: none;
+}
+
+.home-section-reveal {
+  opacity: 0;
+  transform: translateY(32px);
+  transition:
+    opacity 0.48s ease-out,
+    transform 0.48s ease-out;
+}
+
+.home-section-reveal:not(.home-section-reveal--visible) {
+  will-change: transform, opacity;
+}
+
+.home-section-reveal.home-section-reveal--visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.home-section-fullsnap {
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  box-sizing: border-box;
+  min-height: 100%;
+  transition: opacity 0.35s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-page-snap-root {
+    scroll-snap-type: none;
+    scroll-behavior: auto;
+  }
+
+  .home-section-reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+    will-change: auto;
+  }
+
+  .home-section-fullsnap {
+    transition: none;
+    opacity: 1 !important;
+  }
 }

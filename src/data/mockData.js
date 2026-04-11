@@ -43,13 +43,31 @@ export const subjects = [
 
 export const lessonsBySubject = {
   math: [
-    { id: "m1", title: "حل المعادلات الخطية", desc: "فهم المعادلات ذات الخطوة الواحدة والمتعددة.", mastery: 82, chats: 6, review: false },
+    {
+      id: "m1",
+      title: "حل المعادلات الخطية",
+      desc: "فهم المعادلات ذات الخطوة الواحدة والمتعددة.",
+      mastery: 82,
+      chats: 6,
+      review: false,
+      resumePointAr: "تبسيط المعادلة وتوحيد الحدود المتشابهة",
+      resumePointEn: "Simplifying the equation and combining like terms",
+    },
     { id: "m2", title: "المتباينات", desc: "التمثيل والحل والتطبيقات العملية.", mastery: 61, chats: 3, review: true },
     { id: "m3", title: "الدوال الأساسية", desc: "قراءة الدوال ورسمها وفهم سلوكها.", mastery: 48, chats: 8, review: true },
     { id: "m4", title: "الكسور الجبرية", desc: "تبسيط وحل وتطبيقات تدريبية.", mastery: 73, chats: 4, review: false },
   ],
   science: [
-    { id: "s1", title: "الخلايا ووظائفها", desc: "مكونات الخلية والتمييز بين الأنواع.", mastery: 77, chats: 5, review: false },
+    {
+      id: "s1",
+      title: "الخلايا ووظائفها",
+      desc: "مكونات الخلية والتمييز بين الأنواع.",
+      mastery: 77,
+      chats: 5,
+      review: false,
+      resumePointAr: "مخطط تركيب الخلية النباتية مقابل الحيوانية",
+      resumePointEn: "Diagram: plant vs animal cell structure",
+    },
     { id: "s2", title: "التفاعلات الكيميائية", desc: "المفاهيم الأساسية والمعادلات البسيطة.", mastery: 55, chats: 6, review: true },
     { id: "s3", title: "الطاقة والحرارة", desc: "أنواع الطاقة وانتقال الحرارة.", mastery: 68, chats: 2, review: false },
   ],
@@ -58,7 +76,16 @@ export const lessonsBySubject = {
     { id: "a2", title: "النص القرائي", desc: "الفكرة العامة والتفاصيل والتحليل.", mastery: 71, chats: 3, review: false },
   ],
   english: [
-    { id: "e1", title: "Past Simple vs Present Perfect", desc: "الفروق والاستخدامات والأمثلة.", mastery: 63, chats: 4, review: true },
+    {
+      id: "e1",
+      title: "Past Simple vs Present Perfect",
+      desc: "الفروق والاستخدامات والأمثلة.",
+      mastery: 63,
+      chats: 4,
+      review: true,
+      resumePointAr: "تمييز الجمل بـ since / for مع الماضي البسيط",
+      resumePointEn: "Spotting since/for cues with Past Simple",
+    },
     { id: "e2", title: "Reading Comprehension", desc: "استراتيجيات الفهم والإجابة.", mastery: 79, chats: 3, review: false },
   ],
 };
