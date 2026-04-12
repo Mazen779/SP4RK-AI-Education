@@ -66,6 +66,45 @@ function collapseSpaces(s) {
     .replace(/\s+/g, " ");
 }
 
+/** نص قصير للمعاينة: يدعم content كنص أو كائن (مثل solve). */
+export function previewTextFromMessage(m) {
+  if (!m) return "";
+  if (m.role === "user") {
+    const u = m.text ?? m.content;
+    return typeof u === "string" ? u : "";
+  }
+  if (m.text != null && String(m.text).trim()) return String(m.text);
+  const c = m.content;
+  if (typeof c === "string") return c;
+  if (c && typeof c === "object") {
+    if (c.type === "clarification" || c.intent === "clarification") {
+      const msg = String(c.message ?? c.text ?? c.question ?? c.body ?? "").trim();
+      if (msg) return msg.length > 96 ? `${msg.slice(0, 93)}…` : msg;
+      const opts = c.options;
+      if (Array.isArray(opts) && opts.length) {
+        const first = opts[0];
+        const label =
+          typeof first === "string"
+            ? first
+            : String(first?.label ?? first?.text ?? first?.title ?? "").trim();
+        if (label) return label.length > 96 ? `${label.slice(0, 93)}…` : label;
+      }
+      return "Clarification";
+    }
+    const piece = c.final_answer ?? c.answer ?? c.explanation;
+    if (piece == null) return "";
+    if (typeof piece === "object" && piece.type === "fraction") {
+      const n = String(piece.numerator ?? "").trim();
+      const d = String(piece.denominator ?? "").trim();
+      const s = (n && d ? `${n}/${d}` : n || d).trim();
+      if (s) return s;
+      return "";
+    }
+    if (String(piece).trim()) return String(piece);
+  }
+  return "";
+}
+
 /** عناوين قائمة سجل المحادثات: بضع كلمات فقط (مثل واجهات Recents). */
 export const HISTORY_TITLE_WORDS = 4;
 export const HISTORY_TITLE_CHARS = 32;
@@ -118,9 +157,11 @@ export function getHistoryTitleAndPreview(chat, labels) {
   const L = resolveHistoryLabels(labels);
   const msgs = chat.messages;
   const firstUser = msgs?.find((m) => m.role === "user");
+  const firstUserText =
+    firstUser?.text ?? (typeof firstUser?.content === "string" ? firstUser.content : "");
   let title = "";
-  if (firstUser?.text?.trim()) {
-    title = summarizeToTitle(firstUser.text);
+  if (firstUserText?.trim()) {
+    title = summarizeToTitle(firstUserText);
   } else if (firstUser?.imageAttachments?.length) {
     title = L.image;
   } else if (firstUser?.fileNames?.length) {
@@ -131,15 +172,16 @@ export function getHistoryTitleAndPreview(chat, labels) {
 
   let preview = "";
 
-  if (msgs?.length === 1 && firstUser?.text?.trim()) {
-    const words = collapseSpaces(firstUser.text).split(" ");
+  if (msgs?.length === 1 && firstUserText?.trim()) {
+    const words = collapseSpaces(firstUserText).split(" ");
     if (words.length > HISTORY_TITLE_WORDS) {
       preview = summarizeToPreview(words.slice(HISTORY_TITLE_WORDS).join(" "));
     }
   } else {
     const last = msgs?.length ? msgs[msgs.length - 1] : null;
-    if (last?.text?.trim()) {
-      preview = summarizeToPreview(last.text);
+    const lastText = previewTextFromMessage(last);
+    if (lastText?.trim()) {
+      preview = summarizeToPreview(lastText);
     } else if (last?.imageAttachments?.length) {
       preview = L.image;
     } else if (last?.fileNames?.length) {
@@ -159,7 +201,9 @@ export function getHistoryListTitle(chat, labels) {
   const L = resolveHistoryLabels(labels);
   const msgs = chat.messages;
   const firstUser = msgs?.find((m) => m.role === "user");
-  if (firstUser?.text?.trim()) return summarizeToTitle(firstUser.text);
+  const firstUserText =
+    firstUser?.text ?? (typeof firstUser?.content === "string" ? firstUser.content : "");
+  if (firstUserText?.trim()) return summarizeToTitle(firstUserText);
   if (firstUser?.imageAttachments?.length) return L.image;
   if (firstUser?.fileNames?.length) return L.file;
   if (chat.title) return summarizeToTitle(String(chat.title));
@@ -172,20 +216,23 @@ export function getHistoryListTitle(chat, labels) {
  */
 export function buildSessionFromMessages(messages, existingId = null, metadata = {}) {
   const firstUser = messages.find((m) => m.role === "user");
+  const firstUserText =
+    firstUser?.text ?? (typeof firstUser?.content === "string" ? firstUser.content : "");
   const title =
-    (firstUser?.text?.trim() && summarizeToTitle(firstUser.text)) ||
+    (firstUserText?.trim() && summarizeToTitle(firstUserText)) ||
     (firstUser?.imageAttachments?.length ? "صورة" : null) ||
     (firstUser?.fileNames?.length ? "ملف" : null) ||
     "محادثة";
 
   let preview = "";
-  if (messages.length === 1 && firstUser?.text?.trim()) {
-    const words = collapseSpaces(firstUser.text).split(" ");
+  if (messages.length === 1 && firstUserText?.trim()) {
+    const words = collapseSpaces(firstUserText).split(" ");
     if (words.length > HISTORY_TITLE_WORDS) preview = summarizeToPreview(words.slice(HISTORY_TITLE_WORDS).join(" "));
   } else {
     const last = messages[messages.length - 1];
+    const lastText = previewTextFromMessage(last);
     const previewRaw =
-      last?.text?.trim() ||
+      lastText?.trim() ||
       (last?.imageAttachments?.length ? "صورة" : null) ||
       (last?.fileNames?.length ? "مرفقات" : null) ||
       "";

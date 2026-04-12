@@ -6,7 +6,7 @@ import { Button } from "../ui/Button";
 import { PendingImagePreview } from "./PendingImagePreview";
 
 export const PromptComposer = forwardRef(function PromptComposer(
-  { compact = false, variant = "default", message, onMessageChange, onSubmit },
+  { compact = false, variant = "default", message, onMessageChange, onSubmit, onSend },
   ref
 ) {
   const { dir, t, locale } = useLocale();
@@ -112,6 +112,17 @@ export const PromptComposer = forwardRef(function PromptComposer(
   function trySubmit() {
     const trimmed = chatValue.trim();
     if (!trimmed && pendingFiles.length === 0) return;
+
+    if (onSend && pendingFiles.length === 0 && trimmed) {
+      void Promise.resolve(onSend(trimmed)).finally(() => {
+        setChatValue("");
+        setPendingFiles([]);
+        if (imageInputRef.current) imageInputRef.current.value = "";
+        if (fileInputRef.current) fileInputRef.current.value = "";
+      });
+      return;
+    }
+
     onSubmit?.({ text: chatValue, files: [...pendingFiles] });
     setChatValue("");
     setPendingFiles([]);
