@@ -2,6 +2,7 @@ import React from "react";
 import { ChevronRight } from "lucide-react";
 import { Card, CardBody } from "../components/ui/Card";
 import { SectionTitle } from "../components/layout/SectionTitle";
+import LessonMaterialUpload from "../components/upload/LessonMaterialUpload";
 
 export function SettingsPage() {
   const groups = [
@@ -37,6 +38,7 @@ export function SettingsPage() {
           </Card>
         ))}
       </div>
+      <LessonMaterialUpload />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { BarChart3, CalendarDays, Gamepad2, Home, LayoutGrid, Library, ListTodo } from "lucide-react";
+import { BarChart3, CalendarDays, Gamepad2, Home, LayoutGrid, Library, ListTodo, Upload } from "lucide-react";
 import { Sidebar } from "./components/layout/Sidebar";
 import { TopBar } from "./components/layout/TopBar";
 import { ContextPanel } from "./components/panels/ContextPanel";
@@ -19,10 +19,16 @@ import { SubjectPage } from "./pages/Subject";
 import { LessonPage } from "./pages/Lesson";
 import { ChatPage } from "./pages/Chat";
 import { LibraryPage } from "./pages/Library";
+import { LessonMaterialsUploadPage } from "./pages/LessonMaterialsUpload";
+import AdminUpload from "./pages/AdminUpload";
 import { ProgressPage } from "./pages/Progress";
 import { SettingsPage } from "./pages/Settings";
 
 export default function App() {
+  if (typeof window !== "undefined" && window.location.pathname === "/admin/upload") {
+    return <AdminUpload />;
+  }
+
   const { dir, t, locale } = useLocale();
   const [page, setPage] = useState("home");
   const [chatSessionKey, setChatSessionKey] = useState(0);
@@ -136,11 +142,17 @@ export default function App() {
       { key: "subjects", label: t.nav.subjects, icon: LayoutGrid, route: "subject", expandable: true },
       { key: "tasks", label: t.nav.tasks, icon: ListTodo, route: "chat" },
       { key: "library", label: t.nav.library, icon: Library, route: "library" },
+      {
+        key: "materialsUpload",
+        label: locale === "en" ? "Lesson Materials Upload" : "رفع مواد الدرس",
+        icon: Upload,
+        route: "materialsUpload",
+      },
       { key: "progress", label: t.nav.progress, icon: BarChart3, route: "progress" },
       { key: "studyPlan", label: t.nav.studyPlan, icon: CalendarDays, route: "progress" },
       { key: "joinGame", label: t.nav.joinGame, icon: Gamepad2, route: "chat" },
     ],
-    [t]
+    [t, locale]
   );
 
   const isChatVariant = page === "chat" || transitioningToChat;
@@ -166,10 +178,11 @@ export default function App() {
     if (page === "home") return t.titles.home;
     if (page === "chat") return `${t.titles.chat} · ${chatModeLabel}`;
     if (page === "library") return t.titles.library;
+    if (page === "materialsUpload") return locale === "en" ? "Lesson Materials Upload" : "رفع مواد الدرس";
     if (page === "progress") return t.titles.progress;
     if (page === "settings") return t.titles.settings;
     return t.titles.home;
-  }, [page, currentSubject.name, currentLesson.title, t, chatModeLabel]);
+  }, [page, currentSubject.name, currentLesson.title, t, chatModeLabel, locale]);
 
   function handleToggleSidebar() {
     if (window.matchMedia("(min-width: 1024px)").matches) {
@@ -304,6 +317,7 @@ export default function App() {
                     />
                   )}
                   {page === "library" && <LibraryPage bookLibrary={bookLibrary} />}
+                  {page === "materialsUpload" && <LessonMaterialsUploadPage />}
                   {page === "progress" && <ProgressPage subjects={subjects} />}
                   {page === "settings" && <SettingsPage />}
                 </motion.div>

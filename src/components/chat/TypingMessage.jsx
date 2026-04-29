@@ -3,23 +3,24 @@ import AIFormattedMessage from "./AIFormattedMessage";
 
 export default function TypingMessage({ fullText, speed = 10 }) {
   const [displayedText, setDisplayedText] = useState("");
+  const text = typeof fullText === "string" ? fullText : "";
 
   useEffect(() => {
     setDisplayedText("");
-    if (!fullText) return;
+    if (!text) return;
 
     let index = 0;
     const interval = setInterval(() => {
       index += 1;
-      setDisplayedText(fullText.slice(0, index));
+      setDisplayedText(text.slice(0, index));
 
-      if (index >= fullText.length) {
+      if (index >= text.length) {
         clearInterval(interval);
       }
     }, speed);
 
     return () => clearInterval(interval);
-  }, [fullText, speed]);
+  }, [text, speed]);
 
   return <AIFormattedMessage content={displayedText} />;
 }

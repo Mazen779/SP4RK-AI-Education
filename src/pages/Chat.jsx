@@ -5,37 +5,24 @@ import { PromptComposer } from "../components/chat/PromptComposer";
 import { fileToDataUrl } from "../lib/fileToDataUrl";
 import { generateGeminiReply } from "../lib/gemini";
 import { sendQuestionToRag } from "../lib/ragApi";
+import { isSolveLikePayload } from "../lib/ragMessageTypes";
 import { useLocale } from "../lib/locale.jsx";
 
 function newId() {
   return crypto.randomUUID();
 }
 
-function solveAnswerPreview(response) {
-  const fa = response?.final_answer ?? response?.answer ?? response?.explanation;
-  if (fa && typeof fa === "object" && fa.type === "fraction") {
-    const n = String(fa.numerator ?? "").trim();
-    const d = String(fa.denominator ?? "").trim();
-    return (n && d ? `${n}/${d}` : n || d || "").trim();
-  }
-  return String(fa ?? "").trim();
-}
-
-function clarificationPreview(response) {
-  const msg = String(
-    response?.message ?? response?.text ?? response?.question ?? response?.body ?? ""
-  ).trim();
-  if (msg) return msg.length > 96 ? `${msg.slice(0, 93)}…` : msg;
-  const opts = response?.options;
-  if (Array.isArray(opts) && opts.length) {
-    const first = opts[0];
-    const label =
-      typeof first === "string"
-        ? first
-        : String(first?.label ?? first?.text ?? first?.title ?? "").trim();
-    if (label) return label.length > 96 ? `${label.slice(0, 93)}…` : label;
-  }
-  return "Clarification";
+function buildAssistantMessage(response) {
+  return {
+    id: Date.now() + Math.random(),
+    role: "assistant",
+    content: response,
+    isTyping: false,
+    meta: {
+      type: response?.type || "assistant",
+      used_context: Array.isArray(response?.used_context) ? response.used_context : [],
+    },
+  };
 }
 
 export function ChatPage({ messages: parentMessages, onMessagesChange, chatMode = "general", chatModeLabel }) {
@@ -82,73 +69,10 @@ export function ChatPage({ messages: parentMessages, onMessagesChange, chatMode 
 
       console.log("AI Response:", response);
 
-      const resolvedType = response.type ?? response.intent;
-      const isSolve = response.type === "solve" || response.intent === "solve";
-      const isClarification =
-        response.type === "clarification" || response.intent === "clarification";
-
-      let aiMessage;
-
-      if (isSolve) {
-        const assistantRagId = newId();
-        const previewText = solveAnswerPreview(response) || "حل";
-        aiMessage = {
-          id: assistantRagId,
-          role: "assistant",
-          content: response,
-          text: previewText,
-          isTyping: true,
-          meta: {
-            type: resolvedType,
-            used_context: response.used_context || [],
-          },
-        };
-      } else if (isClarification) {
-        const assistantRagId = newId();
-        aiMessage = {
-          id: assistantRagId,
-          role: "assistant",
-          content: response,
-          text: clarificationPreview(response),
-          isTyping: false,
-          meta: {
-            type: resolvedType,
-            used_context: response.used_context || [],
-          },
-        };
-      } else {
-        const aiText = `
-## الإجابة
-${response.answer || ""}
-
-${response.explanation && response.explanation !== response.answer ? `## شرح إضافي\n${response.explanation}` : ""}
-`;
-
-        const assistantRagId = newId();
-        aiMessage = {
-          id: assistantRagId,
-          role: "assistant",
-          content: aiText,
-          text: aiText,
-          isTyping: true,
-          meta: {
-            type: resolvedType,
-            used_context: response.used_context || [],
-          },
-        };
-      }
-
-      const assistantRagId = aiMessage.id;
+      const aiMessage = buildAssistantMessage(response);
 
       commitMessages((prev) => [...prev, aiMessage]);
 
-      if (!isClarification) {
-        setTimeout(() => {
-          commitMessages((prev) =>
-            prev.map((msg) => (msg.id === assistantRagId ? { ...msg, isTyping: false } : msg))
-          );
-        }, isSolve ? 600 : Math.max((typeof aiMessage.content === "string" ? aiMessage.content.length : 0) * 8, 1200));
-      }
     } catch (error) {
       const errMsg = error instanceof Error ? error.message : String(error);
       console.error("Error:", errMsg);
