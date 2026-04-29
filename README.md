@@ -9,10 +9,10 @@ This system is designed to **mimic how a teacher explains problems**, by retriev
 ## 📸 Demo
 
 ### 🏠 Main Page
-![Main Page](./screenshots/main-page.jpeg)
+![Main Page](./screenshots/Main-Page.jpeg)
 
 ### 💬 Chat Interface
-![Chat](./screenshots/chat.jpeg)
+![Chat](./screenshots/Chat.jpeg)
 
 ---
 
