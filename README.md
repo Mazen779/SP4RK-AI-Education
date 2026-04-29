@@ -6,6 +6,16 @@ This system is designed to **mimic how a teacher explains problems**, by retriev
 
 ---
 
+## 📸 Demo
+
+### 🏠 Main Page
+![Main Page](./screenshots/main-page.png)
+
+### 💬 Chat Interface
+![Chat](./screenshots/chat.png)
+
+---
+
 ## 🚀 Key Features
 
 * 📚 **Curriculum-Aware AI**
